@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      serviceAccountName: kotsadm-operator
+      initContainers:
+        - name: check-file
+          image: busybox
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              perms=$(stat -c "%a" /etc/lab3/config.txt)
+              if [ "$perms" -ne "400" ]; then echo missing config; exit 1; fi
+              echo "found config.txt"
+          volumeMounts:
+            - mountPath: /etc/lab3
+              name: lab1-config
+        - name: check-secret-file
+          image: busybox
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              perms=$(stat -c "%a" /etc/lab3/secretkey.txt)
+              if [ "$perms" -ne "400" ]; then echo "missing /etc/lab3/secretkey.txt"; exit 1; fi
+              echo "found secretkey.txt"
+          volumeMounts:
+            - mountPath: /etc/lab3
+              name: lab1-config
+        - name: check-rb
+          image: kotsadm/kotsadm-operator:v1.33.1
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              while :; do
+                sleep 5
+                if [ -f /etc/lab3/restraining-bolt.txt ]; then
+                  echo "restraining bolt found at /etc/lab3/restraining-bolt.txt, better delete kotsadm"
+                  kubectl delete pod -lapp=kotsadm
+                else
+                  echo "all clear!"
+                  exit 0
+                fi
+              done
+          volumeMounts:
+            - mountPath: /etc/lab3
+              name: lab1-config
+      containers:
+        - name: nginx
+          image: nginx
+          volumeMounts:
+            - mountPath: /usr/share/nginx/html
+              name: html
+          resources:
+            limits:
+              memory: '256Mi'
+              cpu: '500m'
+            requests:
+              memory: '32Mi'
+              cpu: '100m'
+      volumes:
+        - name: lab1-config
+          hostPath:
+            path: /etc/lab3/
+        - name: html
+          configMap:
+            name: nginx-html

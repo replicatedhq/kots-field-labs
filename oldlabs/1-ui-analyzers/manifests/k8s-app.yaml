@@ -1,0 +1,9 @@
+apiVersion: app.k8s.io/v1beta1
+kind: Application
+metadata:
+  name: "lab1-ui-analyzers"
+spec:
+  descriptor:
+    links:
+      - description: Open Lab 1.1
+        url: "http://nginx"

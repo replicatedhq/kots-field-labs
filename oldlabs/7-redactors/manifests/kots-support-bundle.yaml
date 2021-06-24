@@ -1,0 +1,16 @@
+apiVersion: troubleshoot.sh/v1beta2
+kind: SupportBundle
+metadata:
+  name: lab1e1
+spec:
+  collectors:
+    - logs:
+        selector:
+          - app=nginx
+        namespace: '{{repl Namespace }}'
+    - logs:
+        selector:
+          - app=password-logger
+        namespace: '{{repl Namespace }}'
+  analyzers: []
+

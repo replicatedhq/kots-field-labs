@@ -1,0 +1,77 @@
+apiVersion: troubleshoot.sh/v1beta2
+kind: SupportBundle
+metadata:
+  name: lab1e3
+spec:
+  collectors:
+    - logs:
+        selector:
+          - app=nginx
+        namespace: '{{repl Namespace }}'
+    - exec:
+        name: file-checks
+        collectorName: check-config
+        selector:
+          - app=file-check-pod
+        namespace: '{{repl Namespace}}'
+        args:
+          - stat
+          - -c
+          - "%a"
+          - /etc/lab3/config.txt
+    - exec:
+        name: file-checks
+        collectorName: check-secret
+        selector:
+          - app=file-check-pod
+        namespace: '{{repl Namespace}}'
+        args:
+          - stat
+          - -c
+          - "%a"
+          - /etc/lab3/secretkey.txt
+    - exec:
+        name: file-checks
+        collectorName: check-rb
+        selector:
+          - app=file-check-pod
+        namespace: '{{repl Namespace}}'
+        args:
+          - /bin/sh
+          - -c
+          - |
+            if [ -f /etc/lab3/restraining-bolt.txt ]; then
+              echo failed
+            else
+              echo success
+            fi
+
+  analyzers:
+    - textAnalyze:
+        checkName: Config Check
+        fileName: file-checks/{{repl Namespace}}/*/check-config-*.txt
+        regex: '400'
+        outcomes:
+          - pass:
+              message: Found properly-restricted file at /etc/lab3/config.txt
+          - fail:
+              message: Could not find a file at /etc/lab3/config.txt with 400 permissions -- please ensure this file exists with any content
+    - textAnalyze:
+        checkName: Secret Check
+        fileName: file-checks/{{repl Namespace}}/*/check-secret-*.txt
+        regex: '400'
+        outcomes:
+          - pass:
+              message: Found properly-restricted file at /etc/lab3/secretkey.txt
+          - fail:
+              message: Could not find a file at /etc/lab3/secretkey.txt with 400 permissions -- please ensure this file exists with any content
+    - textAnalyze:
+        checkName: Restraint Check
+        fileName: file-checks/{{repl Namespace}}/*/check-rb-*.txt
+        regex: 'success'
+        outcomes:
+          - pass:
+              message: No restrictions in place!
+          - fail:
+              message: Restraining bolt in /etc/lab3 has short circuited the startup process. If you remove it, we might be able to launch the application.
+

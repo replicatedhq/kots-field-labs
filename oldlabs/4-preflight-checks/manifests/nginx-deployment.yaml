@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      initContainers:
+        - name: check-secret-file
+          image: kotsadm/kotsadm-operator:v1.33.1
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              sleep 90 # trying to combat backoff
+              perms=$(stat -c "%a" /etc/lab1-e3/more-secret-key.txt)
+              if [ "$perms" -ne "400" ]; then echo "missing /etc/lab1-e3/more-secret-key.txt, better delete kotsadm"; kubectl delete pod -lapp=kotsadm; exit 1; fi
+          volumeMounts:
+            - mountPath: /etc/lab1-e3
+              name: lab1-config
+      containers:
+        - name: nginx
+          image: nginx
+          volumeMounts:
+            - mountPath: /usr/share/nginx/html
+              name: html
+          resources:
+            limits:
+              memory: '256Mi'
+              cpu: '500m'
+            requests:
+              memory: '32Mi'
+              cpu: '100m'
+      volumes:
+        - name: lab1-config
+          hostPath:
+            path: /etc/lab1-e3/
+        - name: html
+          configMap:
+            name: nginx-html

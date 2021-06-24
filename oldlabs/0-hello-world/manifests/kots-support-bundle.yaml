@@ -1,0 +1,16 @@
+apiVersion: troubleshoot.sh/v1beta2
+kind: SupportBundle
+metadata:
+  name: collector-sample
+spec:
+  collectors:
+    - clusterInfo: {}
+    - clusterResources: {}
+    - logs:
+        selector:
+          - app=example
+          - component=nginx
+        namespace: '{{repl Namespace }}'
+        limits:
+          maxAge: 30d
+          maxLines: 10000

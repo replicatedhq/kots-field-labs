@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      initContainers:
+        - name: check-file
+          image: busybox
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              perms=$(stat -c "%a" /etc/lab2/config.txt)
+              if [ "$perms" -ne "400" ]; then echo missing config; exit 1; fi
+              echo "found config.txt"
+          volumeMounts:
+            - mountPath: /etc/lab2
+              name: lab1-config
+        - name: check-secret-file
+          image: busybox
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              perms=$(stat -c "%a" /etc/lab2/secretkey.txt)
+              if [ "$perms" -ne "400" ]; then echo "missing /etc/lab2/secretkey.txt"; exit 1; fi
+              echo "found secretkey.txt"
+          volumeMounts:
+            - mountPath: /etc/lab2
+              name: lab1-config
+      containers:
+        - name: nginx
+          image: nginx
+          volumeMounts:
+            - mountPath: /usr/share/nginx/html
+              name: html
+          resources:
+            limits:
+              memory: '256Mi'
+              cpu: '500m'
+            requests:
+              memory: '32Mi'
+              cpu: '100m'
+      volumes:
+        - name: lab1-config
+          hostPath:
+            path: /etc/lab2/
+        - name: html
+          configMap:
+            name: nginx-html

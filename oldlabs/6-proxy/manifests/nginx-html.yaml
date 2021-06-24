@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-html
+data:
+  index.html: |
+    <!doctype html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <title>Lab 1.6</title>
+    </head>
+    <body>
+      <h2>Congrats!</h2>
+      If you can read this, you've completed Lab 1.6!
+    </body>
+    </html>

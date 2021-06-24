@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: file-check-pod
+  labels:
+    app: file-check-pod
+spec:
+  selector:
+    matchLabels:
+      app: file-check-pod
+  template:
+    metadata:
+      labels:
+        app: file-check-pod
+    spec:
+      containers:
+        - name: busybox
+          image: busybox
+          args:
+            - sleep
+            - infinity
+          volumeMounts:
+            - mountPath: /etc/lab1-e5
+              name: lab1-config
+      volumes:
+        - name: lab1-config
+          hostPath:
+            path: /etc/lab1-e5/
