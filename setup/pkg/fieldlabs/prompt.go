@@ -12,10 +12,10 @@ var templates = &promptui.PromptTemplates{
 	Success: "{{ . | bold }} ",
 }
 
-func PromptConfirmDelete() (string, error) {
+func PromptConfirm() (string, error) {
 
 	prompt := promptui.Prompt{
-		Label:     "Delete the above listed applications? There is no undo:",
+		Label:     "Create and delete the above listed applications? There is no undo:",
 		Templates: templates,
 		Default:   "",
 		Validate: func(input string) error {

@@ -4,17 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/replicatedhq/kots-field-labs/setup/pkg/fieldlabs"
 	"io/ioutil"
 	"net/http"
 	"os"
-)
 
-var actions = map[string]fieldlabs.Action{
-	"create":  fieldlabs.ActionCreate,
-	"destroy": fieldlabs.ActionDestroy,
-}
+	"github.com/pkg/errors"
+	"github.com/replicatedhq/kots-field-labs/setup/pkg/fieldlabs"
+)
 
 func missingParam(s string) error {
 	return errors.New(fmt.Sprintf("Missing or invalid parameters: %s", s))
@@ -78,12 +74,6 @@ func GetParams() (*fieldlabs.Params, error) {
 	if actionString == "" {
 		actionString = "create"
 	}
-
-	action, ok := actions[actionString]
-	if !ok {
-		return nil, errors.Errorf("unkown action %s", actionString)
-	}
-	params.Action = action
 
 	if params.InviteUsers {
 		err := getSessionTokenAndCheckInviteParams(params)

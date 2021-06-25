@@ -105,19 +105,23 @@ For example, to walk through Lab 0, navigate to the [labs/lab00-hello-world READ
 If you make changes to Lab YAMLs as part of a lab exercise, use the `make release` command for that lab.
 
 If you are developing changes to a lab spec itself (e.g. changing how the instance is provisioned), you can re-run the
-same `make apps` and `make instances` commands. `make apps` will merge any new instances into `provisioner_pairs.json`, although
-it **will not** overwrite existing instance specs -- you'll have to remove these manually before running `make apps`.
+same `make apps` and `make instances` commands. `make apps` will recreate `provisioner_pairs.json`.
 
-`make apps` is mostly idempotent. It includes some rudimentary get-or-create logic for apps, channels, and customers. 
-The exception is releases -- new releases for app YAML and kURL installer will always created and promoted to the lab's channel.
+`make apps` and `make instances` can be used to add or remove environments/users. 
+
++ When an entry is added to the environments json, it will result in a new app creation (by running `make apps`) and the provisioner json output will be updated (which can be triggered via `make instances`).
++ When an entry is removed from the environments json, it will result in the corresponding app being removed in the vendor portal (by running `make apps`). The provsioner json will also be updated and after executing `make instances` the corresponding vm's will also be removed.
++ When an entry is added to the labs json, it will result in the corresponding channels and customers to be created (by running `make apps`) and the provisioner json output will be updated (which can be triggered via `make instances`).
++ When an entry is removed from the labs json, **NO UPDATES** will happen to the corresponding channels and customers for the apps defined in environment json! If you want to remove channels or customers, you'll have to remove them by removing the entry from environments.json and recreating them.
 
 ## 10. Cleaning up
 
-```shell
-make tfdestroy
-make apps \
-  action=destroy \
-  prefix=dh-test \
-  labs_json=labs-dh-test.json \
-  env_json=env-dh-test.json
-```
++ Empty the `env_json` file by making it contain `[]`.
++ Run 
+  ```shell
+  make apps \
+    prefix=dh-test \
+    labs_json=labs-dh-test.json \
+    env_json=env-dh-test.json
+  make instances
+  ```

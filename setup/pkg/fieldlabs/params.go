@@ -1,15 +1,7 @@
 package fieldlabs
 
-type Action int
-
-const (
-	ActionCreate Action = iota
-	ActionDestroy
-)
-
 type Params struct {
 	NamePrefix       string
-	Action           Action
 	EnvironmentsJSON string
 	// alternative to JSON, handy for exports from sheets / google forms
 	EnvironmentsCSV string

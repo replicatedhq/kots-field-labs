@@ -7,7 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -159,7 +159,24 @@ func (e *EnvironmentManager) Ensure(envs []Environment, labSpecs []LabSpec) erro
 		}
 	}
 
-	envs, err := e.createApps(envs)
+	envs, appsToCreate, appsToDelete, err := e.getAppsDelta(envs)
+	if err != nil {
+		return errors.Wrap(err, "calculating deltas fails")
+	}
+
+	// confirm delete
+	answer, err := PromptConfirm()
+	if err != nil {
+		return errors.Wrap(err, "confirm fails")
+	}
+
+	if answer != "yes" {
+		return errors.New("prompt declined")
+	}
+
+	e.deleteApps(appsToDelete)
+
+	envs, err = e.createApps(appsToCreate, envs)
 	if err != nil {
 		return errors.Wrap(err, "create apps")
 	}
@@ -180,22 +197,69 @@ func (e *EnvironmentManager) Ensure(envs []Environment, labSpecs []LabSpec) erro
 	return nil
 }
 
+func (e *EnvironmentManager) getAppsDelta(envs []Environment) ([]Environment, []string, []types.App, error) {
+	var outEnvs []Environment
+	var appsToKeep []types.App
+	var appsToCreate []string
+	var appsToDelete []types.App
+	apps, err := e.GClient.ListApps()
+	if err != nil {
+		return nil, nil, nil, errors.Wrapf(err, "list apps")
+	}
+
+	for _, env := range envs {
+		appName := fmt.Sprintf("%s-%s", e.Params.NamePrefix, env.Slug)
+		exists := false
+		for _, app := range apps {
+			match, _ := regexp.MatchString(fmt.Sprintf("^%s-", appName), app.App.Slug)
+			if app.App.ID == appName || app.App.Slug == appName || match {
+				exists = true
+				env.App = *app.App
+				appsToKeep = append(appsToKeep, *app.App)
+				break // App already exists and is also contained in envs
+			}
+		}
+		if !exists {
+			// Aop was not found, so will need to be created.
+			appsToCreate = append(appsToCreate, appName)
+		}
+		outEnvs = append(outEnvs, env)
+	}
+
+	for _, app := range apps {
+		if strings.Contains(app.App.Slug, e.Params.NamePrefix) && !contains(appsToKeep, *app.App) {
+			appsToDelete = append(appsToDelete, *app.App)
+		}
+	}
+
+	e.Log.Info("Following Apps will be created: %d", len(appsToCreate))
+	for _, appName := range appsToCreate {
+		e.Log.Info("%s", appName)
+	}
+	e.Log.Info("Following Apps will be removed: %d", len(appsToDelete))
+	err = e.PrintApps(appsToDelete)
+	if err != nil {
+		return nil, nil, nil, errors.Wrap(err, "print apps to delete")
+	}
+	return outEnvs, appsToCreate, appsToDelete, nil
+}
+
+func contains(apps []types.App, app types.App) bool {
+	for _, v := range apps {
+		if v.Slug == app.Slug {
+			return true
+		}
+	}
+
+	return false
+}
+
 // write TF json for the instances
 // merging the new instances with any already present in the
 // json file
 func (e *EnvironmentManager) mergeWriteTFInstancesJSON(labStatuses []Lab) error {
-	bs, err := ioutil.ReadFile(e.Params.InstanceJSONOutput)
-	if err != nil && !os.IsNotExist(err) {
-		return errors.Wrapf(err, "read file %q", e.Params.InstanceJSONOutput)
-	}
 
 	gcpInstances := map[string]Instance{}
-	if len(bs) > 0 {
-		err := json.Unmarshal(bs, &gcpInstances)
-		if err != nil {
-			return errors.Wrapf(err, "unmarshal existing instances from %q", e.Params.InstanceJSONOutput)
-		}
-	}
 
 	for _, labInstance := range labStatuses {
 		if _, ok := gcpInstances[labInstance.Status.InstanceToMake.Name]; ok {
@@ -433,39 +497,28 @@ func (e *EnvironmentManager) getOrCreateCustomer(lab Lab) (*types.Customer, erro
 	return customer, nil
 }
 
-func (e *EnvironmentManager) createApps(envs []Environment) ([]Environment, error) {
+func (e *EnvironmentManager) createApps(appsToCreate []string, envs []Environment) ([]Environment, error) {
 	var outEnvs []Environment
 	var appsCreated []types.App
 	for _, env := range envs {
 		appName := fmt.Sprintf("%s-%s", e.Params.NamePrefix, env.Slug)
-		app, err := e.getOrCreateApp(appName)
-		if err != nil {
-			return nil, errors.Wrapf(err, "get or create app %q", appName)
+		for _, appToCreate := range appsToCreate {
+			if appName == appToCreate {
+				app, err := e.createApp(appName)
+				if err != nil {
+					return nil, errors.Wrapf(err, "create app %q", appName)
+				}
+				env.App = *app
+				appsCreated = append(appsCreated, *app)
+			}
 		}
-		env.App = *app
 		outEnvs = append(outEnvs, env)
-		appsCreated = append(appsCreated, *app)
-
 	}
 	_ = e.PrintApps(appsCreated)
 	return outEnvs, nil
 }
 
-func (e *EnvironmentManager) getOrCreateApp(appName string) (*types.App, error) {
-	existingApp, err := e.GClient.GetApp(appName)
-	if err != nil && !e.isNotFound(err) {
-		return nil, errors.Wrapf(err, "check for existing app")
-	}
-	if existingApp != nil {
-		e.Log.ActionWithoutSpinner(fmt.Sprintf("Found Existing app %s", appName))
-		return &types.App{
-			ID:        existingApp.ID,
-			Name:      existingApp.Name,
-			Scheduler: "kots",
-			Slug:      existingApp.Slug,
-		}, nil
-	}
-
+func (e *EnvironmentManager) createApp(appName string) (*types.App, error) {
 	e.Log.ActionWithSpinner(fmt.Sprintf("Creating App %s", appName))
 	app, err := e.Client.CreateKOTSApp(appName)
 	if err != nil {
@@ -480,10 +533,6 @@ func (e *EnvironmentManager) getOrCreateApp(appName string) (*types.App, error) 
 		Scheduler: "kots",
 		Slug:      app.Slug,
 	}, nil
-}
-
-func (e *EnvironmentManager) isNotFound(err error) bool {
-	return strings.Contains(err.Error(), "App not found")
 }
 
 func (e *EnvironmentManager) inviteUsers(envs []Environment) error {

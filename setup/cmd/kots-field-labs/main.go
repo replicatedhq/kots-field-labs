@@ -1,13 +1,14 @@
 package main
 
 import (
+	"log"
+	"os"
+
 	"github.com/pkg/errors"
 	"github.com/replicatedhq/kots-field-labs/setup/pkg/fieldlabs"
 	"github.com/replicatedhq/replicated/cli/print"
 	"github.com/replicatedhq/replicated/pkg/kotsclient"
 	"github.com/replicatedhq/replicated/pkg/platformclient"
-	"log"
-	"os"
 )
 
 func main() {
@@ -41,12 +42,6 @@ func Run() error {
 		return errors.Wrap(err, "validate environments")
 	}
 
-	switch params.Action {
-	case fieldlabs.ActionCreate:
-		return envManager.Ensure(environments, labs)
-	case fieldlabs.ActionDestroy:
-		return envManager.Destroy(environments)
-	}
+	return envManager.Ensure(environments, labs)
 
-	return nil
 }
