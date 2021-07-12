@@ -38,7 +38,7 @@ locals {
   }
   proxies = {
     for name, instance in local.provisioner_pairs :
-    instance.prefix => true
+    instance.prefix => true...
     if instance.use_proxy
   }
   airgap_instances = {

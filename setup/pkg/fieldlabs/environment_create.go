@@ -358,8 +358,11 @@ sudo sed -i 's/no/yes/g' /etc/ssh/sshd_config
 sudo service ssh restart
 # add kots to google-sudoers
 sudo usermod -aG google-sudoers,kots kots
-# user must change password on first login
-sudo chage --lastday 0 kots
+
+# TODO(dex) - discuss w/ team -- for airgap-only labs this creates a little bit too much friction
+#
+#     # user must change password on first login
+#     sudo chage --lastday 0 kots
 
 set -euo pipefail
 

@@ -1,8 +1,24 @@
 Lab 1.2: Support Analyzers
 =========================================
 
+* **What you will do**:
+    * Learn to download and manage support bundles when analyzers cannot immediately resolve the issue
+    * Learn to write new analyzers to detect more complex issues as they arise
+* **Who this is for**: This lab is for anyone who will own continuously evolving the reliability and supportability of a KOTS application.
+    * Full Stack / DevOps / Product Engineers
+    * Support Engineers
+    * Implementation / Field Engineers
+* **Prerequisities**:
+    * [Development environment setup from Lab 0](../lab00-hello-world)
+    * Basic working knowledge of Kubernetes
+* **Outcomes**:
+    * You will be ready to use support bundles to collaborate with your team when escalating issues from the field
+    * You will be confident in the process for adding new analyzers, evolving your support tooling over time to continuously
+      reduce unnecessary escalations
+    * You will understand how to escalate issues to the Replicated support team  
 
-> **NOTE**: to complete this lab, you will need to ensure you've set `REPLICATED_APP` and `REPLICATED_API_TOKEN` as you did in [Lab 1 Exercise 0](../lab00-hello-world) to add an analyzer.
+> **NOTE**: to complete this lab, you will need to ensure you've set 
+> `REPLICATED_APP` and `REPLICATED_API_TOKEN` as you did in [Lab 0](../lab00-hello-world) to add an analyzer.
 If you haven't completed Exercise 0, you should go back and do that now.
 It will take **15-30 minutes**.
 

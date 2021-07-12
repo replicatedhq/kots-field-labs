@@ -3,6 +3,21 @@ Lab 1.3: Support CLI
 
 In this lab, we'll learn how to debug and diagnose support problems when the KOTS admin console is unavailable.
 
+* **What you will do**:
+    * Learn to use the `kubectl support-bundle` CLI tools
+* **Who this is for**: This lab is for anyone who will be involved in diagnosing end-user issues in the field
+    * Support Engineers
+    * Implementation / Field Engineers
+    * Full Stack / DevOps / Product Engineers
+* **Prerequisities**:
+    * Basic working knowledge of Kubernetes
+* **Outcomes**:
+    * You will be ready to use the support-bundle CLI to collect a bundle & analysis
+      in the rare case that an instance is struggling to the point that the KOTS 
+      admin console is unavailable
+    
+### Before you start
+
 > **NOTE**: If you have configured your <span style="color:#1E90FF;">**/etc/hosts**</span> file with the instance(s) names and IP address(es) you can use the lab name, i.e. lab03-support-cli in place of the node IP address. 
 
 You can open the KOTS admin console* for your node by navigating to https://lab03-support-cli:8800 in a browser. Otherwise use `https://<Instance IP Address>:8800`. The password to your instance will be provided as part of the lab, or you can reset by SSHing into the node and running the below `kubectl kots` command.
@@ -195,7 +210,9 @@ total 1388
 -rw-rw-r-- 1 dex dex 461852 Apr 13 15:44 support-bundle-2021-04-13T15_43_47.tar.gz
 ```
 
-Use `scp` or some other means to copy the bundle off the server to your workstation, upload it to vendor.replicated.com, and review the analyzers there as well. An example of using `scp` is proivded below. This command should be run from your local workstation.
+Use `scp` or some other means to copy the bundle off the server to your workstation, upload it to vendor.replicated.com, and review the analyzers there as well. 
+An example of using `scp` is proivded below. 
+This command should be run from your local workstation.
 
 ```bash
 scp kots@<server ip address>:~/support-bundle-2021-04-13T15_43_47.tar.gz .

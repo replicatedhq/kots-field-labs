@@ -1,0 +1,34 @@
+[
+  {
+    "name": "Lab 0: Hello World",
+    "slug": "lab00-hello-world",
+    "channel": "Unstable",
+    "channel_slug": "unstable",
+    "customer": "Dev Customer",
+    "yaml_dir": "labs/lab00-hello-world/manifests",
+    "k8s_installer_yaml_path": "labs/lab00-hello-world/kurl-installer.yaml",
+    "skip_install_kots": true,
+    "skip_install_app": true,
+    "config_values": "",
+    "pre_install_sh": "",
+    "post_install_sh": "",
+    "use_public_ip": true,
+    "use_jump_box": false
+  },
+  {
+    "name": "Lab 5: Airgap",
+    "slug": "lab05-airgap",
+    "channel": "lab05-airgap",
+    "channel_slug": "lab05-airgap",
+    "customer": "lab05-airgap",
+    "yaml_dir": "labs/lab05-airgap/manifests",
+    "k8s_installer_yaml_path": "labs/lab05-airgap/kurl-installer.yaml",
+    "skip_install_kots": true,
+    "skip_install_app": true,
+    "config_values": "",
+    "pre_install_sh": "",
+    "post_install_sh": "",
+    "use_public_ip": false,
+    "use_jump_box": true
+  }
+]
